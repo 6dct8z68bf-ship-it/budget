@@ -1,0 +1,10 @@
+# ── OCI ──
+*.terraform*
+!.terraform.lock.hcl
+*.tfstate*
+terraform.tfvars
+crash.log
+
+# ── SSH keys (don't store inside infra/) ──
+*.pem
+*.key

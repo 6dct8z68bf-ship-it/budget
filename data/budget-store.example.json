@@ -1,0 +1,302 @@
+{
+  "currentMonthId": "2026-5-6-mqgnowtj",
+  "months": {
+    "2026-5-6-mqgnowtj": {
+      "id": "2026-5-6-mqgnowtj",
+      "name": "2026 5-6",
+      "creditLimit": 15000,
+      "weeks": [
+        {
+          "id": "0827e673-551a-4feb-ab24-701eb5adadc4",
+          "period": "Period 1",
+          "availableBalance": 9740.46,
+          "unpaidPrevious": 3866.3,
+          "cumulativeSpend": 1393.24,
+          "categoryValues": {
+            "medical": 50,
+            "privateInsurance": 0,
+            "electricity": 0,
+            "gas": 0,
+            "internetMobile": 0,
+            "water": 0,
+            "school": 0,
+            "homeInsurance": 0,
+            "carInsurance": 0,
+            "transport": 0,
+            "government": 1217.3,
+            "shoppingDining": 38.1,
+            "incidentals": 0
+          },
+          "notes": ""
+        },
+        {
+          "id": "1c5e5144-2be4-4805-88d7-8e1bdd0185a2",
+          "period": "Period 2",
+          "availableBalance": 12541.4,
+          "unpaidPrevious": null,
+          "cumulativeSpend": 2458.6,
+          "categoryValues": {
+            "medical": 0,
+            "privateInsurance": 511.44,
+            "electricity": 118.54,
+            "gas": 0,
+            "internetMobile": 4.49,
+            "water": 0,
+            "school": 0,
+            "homeInsurance": 0,
+            "carInsurance": 0,
+            "transport": 79.26,
+            "government": 0,
+            "shoppingDining": 87.65,
+            "incidentals": 138.88
+          },
+          "notes": "ikea, DNS fee"
+        },
+        {
+          "id": "853d0f42-c90f-49c7-a261-dc855dbcd9d9",
+          "period": "Period 3",
+          "availableBalance": 11747.1,
+          "unpaidPrevious": null,
+          "cumulativeSpend": 3252.9,
+          "categoryValues": {
+            "medical": 0,
+            "privateInsurance": 0,
+            "electricity": 0,
+            "gas": 0,
+            "internetMobile": 135,
+            "water": 0,
+            "school": 0,
+            "homeInsurance": 0,
+            "carInsurance": 123.64,
+            "transport": 0,
+            "government": 0,
+            "shoppingDining": 0,
+            "incidentals": 0
+          },
+          "notes": ""
+        },
+        {
+          "id": "3421742a-0291-4fbd-b03d-98c715d2209e",
+          "period": "Period 4",
+          "availableBalance": 11000,
+          "unpaidPrevious": null,
+          "cumulativeSpend": 4000,
+          "categoryValues": {
+            "medical": 0,
+            "privateInsurance": 0,
+            "electricity": 0,
+            "gas": 0,
+            "internetMobile": 0,
+            "water": 0,
+            "school": 0,
+            "homeInsurance": 135,
+            "carInsurance": 0,
+            "transport": 0,
+            "government": 0,
+            "shoppingDining": 0,
+            "incidentals": 80
+          },
+          "notes": "emergency"
+        }
+      ]
+    },
+    "2026-6-7-demo": {
+      "id": "2026-6-7-demo",
+      "name": "2026 6-7",
+      "creditLimit": 15000,
+      "weeks": [
+        {
+          "id": "2026-6-7-demo-1",
+          "period": "Period 1",
+          "availableBalance": 13640,
+          "unpaidPrevious": null,
+          "cumulativeSpend": 1360,
+          "categoryValues": {
+            "medical": 80,
+            "privateInsurance": 0,
+            "electricity": 130,
+            "gas": 0,
+            "internetMobile": 85,
+            "water": 0,
+            "school": 0,
+            "homeInsurance": 0,
+            "carInsurance": 0,
+            "transport": 95,
+            "government": 0,
+            "shoppingDining": 210,
+            "incidentals": 0
+          },
+          "notes": "demo: fuel and family dinner"
+        },
+        {
+          "id": "2026-6-7-demo-2",
+          "period": "Period 2",
+          "availableBalance": 12780,
+          "unpaidPrevious": null,
+          "cumulativeSpend": 2220,
+          "categoryValues": {
+            "medical": 0,
+            "privateInsurance": 511.44,
+            "electricity": 0,
+            "gas": 96,
+            "internetMobile": 0,
+            "water": 0,
+            "school": 0,
+            "homeInsurance": 0,
+            "carInsurance": 0,
+            "transport": 65,
+            "government": 0,
+            "shoppingDining": 145,
+            "incidentals": 90
+          },
+          "notes": "demo: replacement charger"
+        },
+        {
+          "id": "2026-6-7-demo-3",
+          "period": "Period 3",
+          "availableBalance": 11685,
+          "unpaidPrevious": null,
+          "cumulativeSpend": 3315,
+          "categoryValues": {
+            "medical": 0,
+            "privateInsurance": 0,
+            "electricity": 0,
+            "gas": 0,
+            "internetMobile": 135,
+            "water": 285,
+            "school": 0,
+            "homeInsurance": 0,
+            "carInsurance": 0,
+            "transport": 120,
+            "government": 0,
+            "shoppingDining": 188,
+            "incidentals": 0
+          },
+          "notes": ""
+        },
+        {
+          "id": "2026-6-7-demo-4",
+          "period": "Period 4",
+          "availableBalance": 10590,
+          "unpaidPrevious": null,
+          "cumulativeSpend": 4410,
+          "categoryValues": {
+            "medical": 0,
+            "privateInsurance": 0,
+            "electricity": 0,
+            "gas": 0,
+            "internetMobile": 0,
+            "water": 0,
+            "school": 420,
+            "homeInsurance": 140.06,
+            "carInsurance": 0,
+            "transport": 75,
+            "government": 0,
+            "shoppingDining": 245,
+            "incidentals": 160
+          },
+          "notes": "demo: school excursion, appliance repair"
+        }
+      ]
+    },
+    "2026-7-8-demo": {
+      "id": "2026-7-8-demo",
+      "name": "2026 7-8",
+      "creditLimit": 15000,
+      "weeks": [
+        {
+          "id": "2026-7-8-demo-1",
+          "period": "Period 1",
+          "availableBalance": 13770,
+          "unpaidPrevious": null,
+          "cumulativeSpend": 1230,
+          "categoryValues": {
+            "medical": 0,
+            "privateInsurance": 0,
+            "electricity": 155,
+            "gas": 0,
+            "internetMobile": 85,
+            "water": 0,
+            "school": 0,
+            "homeInsurance": 0,
+            "carInsurance": 0,
+            "transport": 60,
+            "government": 0,
+            "shoppingDining": 165,
+            "incidentals": 0
+          },
+          "notes": ""
+        },
+        {
+          "id": "2026-7-8-demo-2",
+          "period": "Period 2",
+          "availableBalance": 13045,
+          "unpaidPrevious": null,
+          "cumulativeSpend": 1955,
+          "categoryValues": {
+            "medical": 45,
+            "privateInsurance": 511.44,
+            "electricity": 0,
+            "gas": 0,
+            "internetMobile": 0,
+            "water": 0,
+            "school": 0,
+            "homeInsurance": 0,
+            "carInsurance": 0,
+            "transport": 52,
+            "government": 0,
+            "shoppingDining": 98,
+            "incidentals": 0
+          },
+          "notes": "demo: pharmacy"
+        },
+        {
+          "id": "2026-7-8-demo-3",
+          "period": "Period 3",
+          "availableBalance": 12110,
+          "unpaidPrevious": null,
+          "cumulativeSpend": 2890,
+          "categoryValues": {
+            "medical": 0,
+            "privateInsurance": 0,
+            "electricity": 0,
+            "gas": 0,
+            "internetMobile": 135,
+            "water": 0,
+            "school": 0,
+            "homeInsurance": 0,
+            "carInsurance": 123.64,
+            "transport": 140,
+            "government": 0,
+            "shoppingDining": 180,
+            "incidentals": 220
+          },
+          "notes": "demo: tyres deposit"
+        },
+        {
+          "id": "2026-7-8-demo-4",
+          "period": "Period 4",
+          "availableBalance": 11335,
+          "unpaidPrevious": null,
+          "cumulativeSpend": 3665,
+          "categoryValues": {
+            "medical": 0,
+            "privateInsurance": 0,
+            "electricity": 0,
+            "gas": 0,
+            "internetMobile": 0,
+            "water": 0,
+            "school": 0,
+            "homeInsurance": 0,
+            "carInsurance": 0,
+            "transport": 82,
+            "government": 210,
+            "shoppingDining": 230,
+            "incidentals": 65
+          },
+          "notes": "demo: council fee"
+        }
+      ]
+    }
+  }
+}

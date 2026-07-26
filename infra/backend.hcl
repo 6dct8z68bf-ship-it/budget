@@ -1,0 +1,5 @@
+bucket               = "family-budget-tfstate"
+namespace            = "sd4qtykmlhzs"
+region               = "ap-sydney-1"
+key                  = "infra/terraform.tfstate"
+workspace_key_prefix = "tf-state-env"

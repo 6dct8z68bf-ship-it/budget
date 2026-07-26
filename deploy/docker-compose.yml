@@ -1,0 +1,32 @@
+services:
+  budget-app:
+    build:
+      context: ..
+      dockerfile: deploy/Dockerfile
+    container_name: family-budget-app
+    ports:
+      - "5173:5173"
+    environment:
+      HOST: 0.0.0.0
+      PORT: 5173
+      REDIRECT_HTTP_TO_HTTPS: "false"
+      APP_PASSWORD: ${APP_PASSWORD:-}
+      SESSION_SECRET: ${SESSION_SECRET:-}
+      DEFAULT_ACCOUNT_PASSWORD_HASH: ${DEFAULT_ACCOUNT_PASSWORD_HASH:-}
+      GOOGLE_OAUTH_ENABLED: ${GOOGLE_OAUTH_ENABLED:-false}
+      GOOGLE_OAUTH_CLIENT_ID: ${GOOGLE_OAUTH_CLIENT_ID:-}
+      GOOGLE_OAUTH_CLIENT_SECRET: ${GOOGLE_OAUTH_CLIENT_SECRET:-}
+      GOOGLE_OAUTH_AUTHORIZATION_ENDPOINT: ${GOOGLE_OAUTH_AUTHORIZATION_ENDPOINT:-https://accounts.google.com/o/oauth2/v2/auth}
+      GOOGLE_OAUTH_TOKEN_ENDPOINT: ${GOOGLE_OAUTH_TOKEN_ENDPOINT:-https://oauth2.googleapis.com/token}
+      GOOGLE_OAUTH_USERINFO_ENDPOINT: ${GOOGLE_OAUTH_USERINFO_ENDPOINT:-https://openidconnect.googleapis.com/v1/userinfo}
+      GOOGLE_OAUTH_APP_BASE_URL: ${GOOGLE_OAUTH_APP_BASE_URL:-}
+      GOOGLE_OAUTH_REDIRECT_PATH: ${GOOGLE_OAUTH_REDIRECT_PATH:-/auth/google/callback}
+      GOOGLE_OAUTH_ALLOWED_DOMAIN: ${GOOGLE_OAUTH_ALLOWED_DOMAIN:-}
+      GOOGLE_OAUTH_MOCK_ENABLED: ${GOOGLE_OAUTH_MOCK_ENABLED:-false}
+      APP_BUILD_VERSION: ${APP_BUILD_VERSION:-}
+      APP_BUILD_TIME: ${APP_BUILD_TIME:-}
+      APP_CONTACT_EMAIL: ${APP_CONTACT_EMAIL:-}
+      WORKSPACE_STORE_ROOT: ${WORKSPACE_STORE_ROOT:-/app/workspace-stores}
+    volumes:
+      - ../workspace-stores:/app/workspace-stores
+    restart: unless-stopped

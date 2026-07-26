@@ -1,0 +1,133 @@
+name: Deploy To VM
+
+on:
+  workflow_run:
+    workflows: ["Docker Image CI"]
+    types: [completed]
+  workflow_dispatch:
+    inputs:
+      image_tag:
+        description: "Image tag to deploy (defaults to latest)"
+        required: false
+        type: string
+
+jobs:
+  deploy:
+    if: >-
+      github.event_name == 'workflow_dispatch' ||
+      (
+        github.event.workflow_run.conclusion == 'success' &&
+        github.event.workflow_run.event == 'push' &&
+        (
+          github.event.workflow_run.head_branch == 'main' ||
+          startsWith(github.event.workflow_run.head_branch, 'v')
+        )
+      )
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v5
+
+      - name: Start SSH agent
+        uses: webfactory/ssh-agent@v0.9.1
+        with:
+          ssh-private-key: ${{ secrets.VM_SSH_PRIVATE_KEY }}
+
+      - name: Configure known hosts
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.VM_SSH_KNOWN_HOSTS }}" >> ~/.ssh/known_hosts
+          chmod 600 ~/.ssh/known_hosts
+
+      - name: Write SSL cert files from secrets
+        env:
+          CERT: ${{ secrets.APP_SSL_CERT }}
+          KEY: ${{ secrets.APP_SSL_KEY }}
+        run: |
+          mkdir -p /tmp/certs
+          echo "$CERT" > /tmp/certs/server.crt
+          echo "$KEY" > /tmp/certs/server.key
+          chmod 644 /tmp/certs/server.crt
+          chmod 600 /tmp/certs/server.key
+
+      - name: Sync files to VM
+        run: |
+          ssh -o BatchMode=yes "${{ vars.VM_SSH_USER }}@${{ vars.VM_SSH_HOST }}" \
+            "mkdir -p '${{ vars.VM_APP_PATH }}'/certs"
+          scp -o BatchMode=yes /tmp/certs/server.crt /tmp/certs/server.key \
+            "${{ vars.VM_SSH_USER }}@${{ vars.VM_SSH_HOST }}:${{ vars.VM_APP_PATH }}/certs/"
+          scp -o BatchMode=yes deploy/docker-compose.prod.yml \
+            "${{ vars.VM_SSH_USER }}@${{ vars.VM_SSH_HOST }}:${{ vars.VM_APP_PATH }}/docker-compose.yml"
+
+      - name: Deploy with Docker Compose
+        env:
+          APP_PASSWORD_SECRET: ${{ secrets.APP_PASSWORD }}
+          SESSION_SECRET_SECRET: ${{ secrets.SESSION_SECRET }}
+          DEFAULT_ACCOUNT_PASSWORD_HASH_SECRET: ${{ secrets.DEFAULT_ACCOUNT_PASSWORD_HASH }}
+          GOOGLE_OAUTH_CLIENT_SECRET_SECRET: ${{ secrets.GOOGLE_OAUTH_CLIENT_SECRET }}
+          GOOGLE_OAUTH_ENABLED_VAR: ${{ vars.GOOGLE_OAUTH_ENABLED }}
+          GOOGLE_OAUTH_CLIENT_ID_VAR: ${{ vars.GOOGLE_OAUTH_CLIENT_ID }}
+          GOOGLE_OAUTH_APP_BASE_URL_VAR: ${{ vars.GOOGLE_OAUTH_APP_BASE_URL }}
+          GOOGLE_OAUTH_REDIRECT_PATH_VAR: ${{ vars.GOOGLE_OAUTH_REDIRECT_PATH }}
+          GOOGLE_OAUTH_ALLOWED_DOMAIN_VAR: ${{ vars.GOOGLE_OAUTH_ALLOWED_DOMAIN }}
+          APP_CONTACT_EMAIL_VAR: ${{ vars.APP_CONTACT_EMAIL }}
+        run: |
+          APP_PASSWORD_B64="$(printf '%s' "$APP_PASSWORD_SECRET" | base64 -w0)"
+          SESSION_SECRET_B64="$(printf '%s' "$SESSION_SECRET_SECRET" | base64 -w0)"
+          DEFAULT_ACCOUNT_PASSWORD_HASH_B64="$(printf '%s' "$DEFAULT_ACCOUNT_PASSWORD_HASH_SECRET" | base64 -w0)"
+          GOOGLE_OAUTH_CLIENT_SECRET_B64="$(printf '%s' "$GOOGLE_OAUTH_CLIENT_SECRET_SECRET" | base64 -w0)"
+          GOOGLE_OAUTH_ENABLED_B64="$(printf '%s' "$GOOGLE_OAUTH_ENABLED_VAR" | base64 -w0)"
+          GOOGLE_OAUTH_CLIENT_ID_B64="$(printf '%s' "$GOOGLE_OAUTH_CLIENT_ID_VAR" | base64 -w0)"
+          GOOGLE_OAUTH_APP_BASE_URL_B64="$(printf '%s' "$GOOGLE_OAUTH_APP_BASE_URL_VAR" | base64 -w0)"
+          GOOGLE_OAUTH_REDIRECT_PATH_B64="$(printf '%s' "$GOOGLE_OAUTH_REDIRECT_PATH_VAR" | base64 -w0)"
+          GOOGLE_OAUTH_ALLOWED_DOMAIN_B64="$(printf '%s' "$GOOGLE_OAUTH_ALLOWED_DOMAIN_VAR" | base64 -w0)"
+          APP_CONTACT_EMAIL_B64="$(printf '%s' "$APP_CONTACT_EMAIL_VAR" | base64 -w0)"
+          ssh -o BatchMode=yes "${{ vars.VM_SSH_USER }}@${{ vars.VM_SSH_HOST }}" "APP_PASSWORD_B64=$APP_PASSWORD_B64 SESSION_SECRET_B64=$SESSION_SECRET_B64 DEFAULT_ACCOUNT_PASSWORD_HASH_B64=$DEFAULT_ACCOUNT_PASSWORD_HASH_B64 GOOGLE_OAUTH_CLIENT_SECRET_B64=$GOOGLE_OAUTH_CLIENT_SECRET_B64 GOOGLE_OAUTH_ENABLED_B64=$GOOGLE_OAUTH_ENABLED_B64 GOOGLE_OAUTH_CLIENT_ID_B64=$GOOGLE_OAUTH_CLIENT_ID_B64 GOOGLE_OAUTH_APP_BASE_URL_B64=$GOOGLE_OAUTH_APP_BASE_URL_B64 GOOGLE_OAUTH_REDIRECT_PATH_B64=$GOOGLE_OAUTH_REDIRECT_PATH_B64 GOOGLE_OAUTH_ALLOWED_DOMAIN_B64=$GOOGLE_OAUTH_ALLOWED_DOMAIN_B64 APP_CONTACT_EMAIL_B64=$APP_CONTACT_EMAIL_B64 bash -seuo pipefail" <<'REMOTE'
+          cd '${{ vars.VM_APP_PATH }}'
+          sudo -n docker --version
+          sudo -n docker compose version
+
+          if [ '${{ github.event_name }}' = 'workflow_dispatch' ]; then
+            APP_IMAGE_TAG='${{ inputs.image_tag }}'
+            if [ -z "$APP_IMAGE_TAG" ]; then APP_IMAGE_TAG='latest'; fi
+          elif [ '${{ github.event.workflow_run.head_branch }}' != 'main' ]; then
+            APP_IMAGE_TAG='${{ github.event.workflow_run.head_branch }}'
+            APP_IMAGE_TAG="${APP_IMAGE_TAG//\//-}"
+          else
+            APP_IMAGE_TAG='sha-${{ github.event.workflow_run.head_sha }}'
+          fi
+          touch .env
+          grep -Ev '^(APP_IMAGE_TAG|APP_PASSWORD|SESSION_SECRET|DEFAULT_ACCOUNT_PASSWORD_HASH|GOOGLE_OAUTH_ENABLED|GOOGLE_OAUTH_CLIENT_ID|GOOGLE_OAUTH_CLIENT_SECRET|GOOGLE_OAUTH_APP_BASE_URL|GOOGLE_OAUTH_REDIRECT_PATH|GOOGLE_OAUTH_ALLOWED_DOMAIN|APP_BUILD_VERSION|APP_BUILD_TIME|APP_CONTACT_EMAIL)=' .env > .env.tmp || true
+          printf 'APP_IMAGE_TAG=%s\n' "$APP_IMAGE_TAG" >> .env.tmp
+          printf 'APP_PASSWORD=%s\n' "$(printf '%s' "$APP_PASSWORD_B64" | base64 -d)" >> .env.tmp
+          printf "SESSION_SECRET='%s'\n" "$(printf '%s' "$SESSION_SECRET_B64" | base64 -d)" >> .env.tmp
+          printf "DEFAULT_ACCOUNT_PASSWORD_HASH='%s'\n" "$(printf '%s' "$DEFAULT_ACCOUNT_PASSWORD_HASH_B64" | base64 -d)" >> .env.tmp
+          printf 'GOOGLE_OAUTH_ENABLED=%s\n' "$(printf '%s' "$GOOGLE_OAUTH_ENABLED_B64" | base64 -d)" >> .env.tmp
+          printf 'GOOGLE_OAUTH_CLIENT_ID=%s\n' "$(printf '%s' "$GOOGLE_OAUTH_CLIENT_ID_B64" | base64 -d)" >> .env.tmp
+          printf "GOOGLE_OAUTH_CLIENT_SECRET='%s'\n" "$(printf '%s' "$GOOGLE_OAUTH_CLIENT_SECRET_B64" | base64 -d)" >> .env.tmp
+          printf 'GOOGLE_OAUTH_APP_BASE_URL=%s\n' "$(printf '%s' "$GOOGLE_OAUTH_APP_BASE_URL_B64" | base64 -d)" >> .env.tmp
+          printf 'GOOGLE_OAUTH_REDIRECT_PATH=%s\n' "$(printf '%s' "$GOOGLE_OAUTH_REDIRECT_PATH_B64" | base64 -d)" >> .env.tmp
+          printf 'GOOGLE_OAUTH_ALLOWED_DOMAIN=%s\n' "$(printf '%s' "$GOOGLE_OAUTH_ALLOWED_DOMAIN_B64" | base64 -d)" >> .env.tmp
+          printf 'APP_CONTACT_EMAIL=%s\n' "$(printf '%s' "$APP_CONTACT_EMAIL_B64" | base64 -d)" >> .env.tmp
+          mv .env.tmp .env
+
+          sudo -n docker compose pull
+
+          APP_BUILD_VERSION=$(sudo -n docker image inspect docker.io/henryhhl18/family-budget-app:$APP_IMAGE_TAG --format '{{index .RepoDigests 0}}' | sed 's|^docker.io/henryhhl18/family-budget-app@||')
+          APP_BUILD_TIME=$(date -u +%Y-%m-%dT%H:%M:%SZ)
+          grep -Ev '^(APP_BUILD_VERSION|APP_BUILD_TIME)=' .env > .env.tmp || true
+          mv .env.tmp .env
+          printf 'APP_BUILD_VERSION=%s\nAPP_BUILD_TIME=%s\n' "$APP_BUILD_VERSION" "$APP_BUILD_TIME" >> .env
+
+          mkdir -p workspace-stores
+          mkdir -p workspace-stores/default
+          if [ -f budget-store.json ]; then
+            cp budget-store.json workspace-stores/default/budget-store.json
+          fi
+          rm -f budget-store.json
+
+          sudo -n docker compose -p family-budget down
+          sudo -n docker compose -p family-budget up -d
+          REMOTE

@@ -1,0 +1,15 @@
+budget-store.json
+accounting.xlsx
+node_modules/
+dist/
+account-registry.json
+session-registry.json
+oauth-state-registry.json
+.env
+certs/
+.vscode/
+docs/
+android-app
+.tmp-workspaces/
+.codex*/
+workspace-stores/

@@ -1,0 +1,42 @@
+services:
+  budget-app-e2e:
+    image: docker.io/henryhhl18/family-budget-app:${APP_IMAGE_TAG:-latest}
+    container_name: family-budget-e2e
+    ports:
+      - "127.0.0.1:18080:5173"
+      - "127.0.0.1:18443:5443"
+    environment:
+      HOST: 0.0.0.0
+      PORT: 5173
+      HTTPS_PORT: 5443
+      REDIRECT_HTTP_TO_HTTPS: "true"
+      APP_PASSWORD: ${APP_PASSWORD}
+      SESSION_SECRET: ${SESSION_SECRET:-e2e-session-secret}
+      DEFAULT_ACCOUNT_ID: ${DEFAULT_ACCOUNT_ID:-e2e-owner}
+      DEFAULT_ACCOUNT_DISPLAY_NAME: ${DEFAULT_ACCOUNT_DISPLAY_NAME:-E2E Owner}
+      DEFAULT_ACCOUNT_EMAIL: ${DEFAULT_ACCOUNT_EMAIL:-owner@example.test}
+      DEFAULT_ACCOUNT_PASSWORD_HASH: ${DEFAULT_ACCOUNT_PASSWORD_HASH:-}
+      DEFAULT_ACCOUNT_PASSWORD: ${DEFAULT_ACCOUNT_PASSWORD:-e2e-owner-password}
+      DEFAULT_AUTH_PROVIDER: ${DEFAULT_AUTH_PROVIDER:-password}
+      DEFAULT_AUTH_SUBJECT: ${DEFAULT_AUTH_SUBJECT:-e2e-owner-subject}
+      GOOGLE_OAUTH_ENABLED: ${GOOGLE_OAUTH_ENABLED:-true}
+      GOOGLE_OAUTH_CLIENT_ID: ${GOOGLE_OAUTH_CLIENT_ID:-e2e-google-client}
+      GOOGLE_OAUTH_CLIENT_SECRET: ${GOOGLE_OAUTH_CLIENT_SECRET:-e2e-google-secret}
+      GOOGLE_OAUTH_APP_BASE_URL: ${GOOGLE_OAUTH_APP_BASE_URL:-https://127.0.0.1:18443}
+      GOOGLE_OAUTH_REDIRECT_PATH: ${GOOGLE_OAUTH_REDIRECT_PATH:-/auth/google/callback}
+      GOOGLE_OAUTH_ALLOWED_DOMAIN: ${GOOGLE_OAUTH_ALLOWED_DOMAIN:-}
+      GOOGLE_OAUTH_MOCK_ENABLED: ${GOOGLE_OAUTH_MOCK_ENABLED:-true}
+      DEFAULT_WORKSPACE_ID: ${DEFAULT_WORKSPACE_ID:-e2e-default}
+      WORKSPACE_STORE_ROOT: ${WORKSPACE_STORE_ROOT:-/app/workspace-stores}
+      WORKSPACE_REGISTRY_SEED_IDS: ${WORKSPACE_REGISTRY_SEED_IDS:-e2e-session-alpha,e2e-session-bravo}
+      WORKSPACE_REGISTRY_UNOWNED_SEED_IDS: ${WORKSPACE_REGISTRY_UNOWNED_SEED_IDS:-e2e-unowned-workspace}
+      APP_BUILD_VERSION: ${APP_BUILD_VERSION:-e2e}
+      APP_BUILD_TIME: ${APP_BUILD_TIME:-}
+      E2E_TEST_MODE: ${E2E_TEST_MODE:-false}
+      E2E_RESET_TOKEN: ${E2E_RESET_TOKEN:-}
+      SSL_CERT_PATH: ${SSL_CERT_PATH:-/app/certs/server.crt}
+      SSL_KEY_PATH: ${SSL_KEY_PATH:-/app/certs/server.key}
+    volumes:
+      - ./workspace-stores:/app/workspace-stores
+      - ./certs:/app/certs:ro
+    restart: unless-stopped

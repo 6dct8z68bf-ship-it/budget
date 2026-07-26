@@ -1,0 +1,66 @@
+{
+  "creditLimit": 15000,
+  "categories": [
+    { "key": "medical", "label": "醫療自費", "type": "nonGrocery", "hint": "medical, dental, pharmacy" },
+    { "key": "privateInsurance", "label": "私保", "type": "nonGrocery", "hint": "Bupa, Medibank, NIB, HCF" },
+    { "key": "electricity", "label": "電費", "type": "nonGrocery", "hint": "electricity bills" },
+    { "key": "gas", "label": "瓦斯費", "type": "nonGrocery", "hint": "gas bills" },
+    { "key": "internetMobile", "label": "網路手機費(含服務訂閱)", "type": "nonGrocery", "hint": "internet, mobile, subscriptions" },
+    { "key": "water", "label": "水費", "type": "nonGrocery", "hint": "water bills" },
+    { "key": "school", "label": "學費", "type": "nonGrocery", "hint": "school and education" },
+    { "key": "homeInsurance", "label": "房屋險", "type": "nonGrocery", "hint": "home or contents insurance" },
+    { "key": "carInsurance", "label": "車險", "type": "nonGrocery", "hint": "car insurance" },
+    { "key": "transport", "label": "交通費用", "type": "nonGrocery", "hint": "fuel, tolls, parking, transit" },
+    { "key": "government", "label": "政府費用", "type": "nonGrocery", "hint": "fees, fines, rates, licenses" },
+    { "key": "shoppingDining", "label": "購物外食", "type": "nonGrocery", "hint": "retail, takeaway, cafe, restaurant" },
+    { "key": "incidentals", "label": "當周意外支出", "type": "incidental", "hint": "unexpected or one-off spending" }
+  ],
+  "initialState": {
+    "currentMonthId": "2026-may-jun",
+    "months": {
+      "2026-may-jun": {
+        "id": "2026-may-jun",
+        "name": "2026 May-Jun",
+        "creditLimit": 15000,
+        "weeks": [
+          {
+            "id": "2026-may-jun-1",
+            "period": "20/5 - 29/5",
+            "availableBalance": 11747.1,
+            "unpaidPrevious": null,
+            "cumulativeSpend": 1433.44,
+            "categoryValues": { "medical": 50, "government": 1217.3, "shoppingDining": 38.1, "incidentals": 0 },
+            "notes": ""
+          },
+          {
+            "id": "2026-may-jun-2",
+            "period": "30/5 - 5/6",
+            "availableBalance": 11747.1,
+            "unpaidPrevious": null,
+            "cumulativeSpend": 2458.6,
+            "categoryValues": { "privateInsurance": 511.44, "electricity": 118.54, "internetMobile": 4.49, "transport": 79.26, "shoppingDining": 87.65, "incidentals": 138.88 },
+            "notes": "ikea, auwitch dns"
+          },
+          {
+            "id": "2026-may-jun-3",
+            "period": "6/6 - 12/6",
+            "availableBalance": 11747.1,
+            "unpaidPrevious": null,
+            "cumulativeSpend": 3252.9,
+            "categoryValues": { "internetMobile": 135, "carInsurance": 123.64, "incidentals": 0 },
+            "notes": ""
+          },
+          {
+            "id": "2026-may-jun-4",
+            "period": "13/6 - 19/6",
+            "availableBalance": 11747.1,
+            "unpaidPrevious": null,
+            "cumulativeSpend": null,
+            "categoryValues": {},
+            "notes": ""
+          }
+        ]
+      }
+    }
+  }
+}

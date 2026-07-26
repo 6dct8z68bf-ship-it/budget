@@ -1,0 +1,29 @@
+{
+  "name": "family-weekly-budget",
+  "private": true,
+  "engines": {
+    "node": ">=20.19 <21 || >=22.12"
+  },
+  "scripts": {
+    "hash-password": "node scripts/hash-password.js",
+    "dev": "vite",
+    "dev:server": "node src/server/server.js",
+    "dev:all": "concurrently -k -n vite,server -c cyan,magenta \"npm:dev\" \"npm:dev:server\"",
+    "build": "vite build",
+    "preview": "cross-env PUBLIC_ROOT=dist/public node src/server/server.js",
+    "typecheck": "tsc --noEmit && svelte-check --tsconfig ./tsconfig.json",
+    "test:e2e": "playwright test tests/e2e/post-deploy.spec.js"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.57.0",
+    "@sveltejs/vite-plugin-svelte": "^7.2.0",
+    "@tsconfig/svelte": "^5.0.8",
+    "@types/node": "^26.0.0",
+    "concurrently": "^10.0.3",
+    "cross-env": "^10.0.0",
+    "svelte": "^5.56.4",
+    "svelte-check": "^4.7.2",
+    "typescript": "^6.0.3",
+    "vite": "^8.1.3"
+  }
+}
