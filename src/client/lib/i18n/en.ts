@@ -192,7 +192,6 @@ export const en: Dictionary = {
   transactionDate: "Transaction date",
   transactionContext: "Month / period",
   transactionContextLine: (month, period) => `${month} · ${period}`,
-  descriptionOrNotes: "Description / notes",
   notesPlaceholder: "e.g. emergency repair $amount\nunexpected fee $amount",
   minAmount: "Minimum amount",
   amount: "Amount",

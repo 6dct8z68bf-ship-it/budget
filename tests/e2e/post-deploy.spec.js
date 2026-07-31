@@ -2563,6 +2563,119 @@ test("transaction import accepts copied online banking text @e2e-import", async 
   }
 });
 
+test("transaction history shows description only, no separate notes column @e2e-core", async ({ page }) => {
+  test.skip(!password, "E2E_APP_PASSWORD is required for authenticated deploy checks.");
+
+  await login(page);
+  await page.locator("#languageSelect").selectOption("en");
+  const originalState = await readState(page);
+  const incidentalNote = "E2E incidental note";
+
+  try {
+    const state = structuredClone(originalState);
+    const monthId = "2098-04";
+    const weekId = `${monthId}-w1`;
+    state.months[monthId] = {
+      id: monthId,
+      sortKey: monthId,
+      name: "April 2098",
+      displayName: "April 2098",
+      creditLimit: 15000,
+      weeks: [
+        {
+          id: weekId,
+          period: "2098-04-01 - 2098-04-07",
+          availableBalance: 14200,
+          unpaidPrevious: null,
+          cumulativeSpend: 800,
+          categoryValues: { grocery: 420, medical: 180, incidentals: 200 },
+          notes: incidentalNote,
+          transactions: [
+            {
+              id: "txn-inc-1",
+              dateIso: "2098-04-03",
+              amount: -200,
+              expenseAmount: 200,
+              description: "UNPLANNED REPAIR",
+              normalizedMerchant: "UNPLANNED REPAIR",
+              categoryKey: "incidentals",
+              periodId: weekId,
+              monthId,
+              workspaceId: defaultWorkspaceId,
+              createdAt: "",
+              updatedAt: "",
+              source: "import",
+            },
+            {
+              id: "txn-gro-1",
+              dateIso: "2098-04-02",
+              amount: -420,
+              expenseAmount: 420,
+              description: "COLES MARKET",
+              normalizedMerchant: "COLES MARKET",
+              categoryKey: "grocery",
+              periodId: weekId,
+              monthId,
+              workspaceId: defaultWorkspaceId,
+              createdAt: "",
+              updatedAt: "",
+              source: "import",
+            },
+            {
+              id: "txn-med-1",
+              dateIso: "2098-04-01",
+              amount: -180,
+              expenseAmount: 180,
+              description: "CLINIC VISIT",
+              normalizedMerchant: "CLINIC VISIT",
+              categoryKey: "medical",
+              periodId: weekId,
+              monthId,
+              workspaceId: defaultWorkspaceId,
+              createdAt: "",
+              updatedAt: "",
+              source: "import",
+            },
+          ],
+        },
+      ],
+    };
+    state.currentMonthId = monthId;
+    await restoreState(page, state);
+
+    // Open history → transactions panel
+    await page.locator('.nav-tab[data-view="history"]').click();
+    await expect(page.locator("#historyView")).toHaveClass(/active/);
+    await page.locator('.history-section-tab[data-history-section="transactions"]').click();
+    await expect(page.locator("#historyTransactionsPanel")).not.toHaveClass(/hidden/);
+
+    // No separate description/notes column: header has exactly 5 columns and no notes label
+    await expect(page.locator("#transactionHistoryTable thead th")).toHaveCount(5);
+    await expect(page.locator("#transactionHistoryTable thead")).not.toContainText("Description / notes");
+
+    // Merchant/description column shows each transaction's own description
+    const incidentalRow = page.locator("#transactionHistoryTable tbody tr").filter({ hasText: "UNPLANNED REPAIR" });
+    await expect(incidentalRow).toContainText("UNPLANNED REPAIR");
+    const groceryRow = page.locator("#transactionHistoryTable tbody tr").filter({ hasText: "COLES MARKET" });
+    await expect(groceryRow).toContainText("COLES MARKET");
+    const medicalRow = page.locator("#transactionHistoryTable tbody tr").filter({ hasText: "CLINIC VISIT" });
+    await expect(medicalRow).toContainText("CLINIC VISIT");
+
+    // The week note is not rendered anywhere in the transaction table
+    await expect(page.locator("#transactionHistoryTable")).not.toContainText(incidentalNote);
+
+    // Overview panel regression: the note still shows only on the incidentals row
+    await page.locator('.history-section-tab[data-history-section="overview"]').click();
+    await expect(page.locator("#historyOverviewPanel")).not.toHaveClass(/hidden/);
+    const overviewIncidental = page.locator("#historyTable tbody tr").filter({ hasText: "Incidentals" });
+    await expect(overviewIncidental).toContainText(incidentalNote);
+    const overviewGrocery = page.locator("#historyTable tbody tr").filter({ hasText: "Grocery" });
+    await expect(overviewGrocery).not.toContainText(incidentalNote);
+  } finally {
+    await restoreState(page, originalState);
+  }
+});
+
 test("brand home link navigates to overview @e2e-core", async ({ page }) => {
   test.skip(!password, "E2E_APP_PASSWORD is required for authenticated deploy checks.");
 

@@ -112,7 +112,7 @@
             periodId: week.id,
             periodLabel,
             periodDisplay,
-            notes: String(week.notes || "").trim(),
+            notes: transaction.categoryKey === "incidentals" ? String(week.notes || "").trim() : "",
           });
         });
       });
@@ -267,7 +267,7 @@
         <thead>
           <tr>
             <th>{$t("transactionDate")}</th><th>{$t("merchantDescription")}</th><th>{$t("category")}</th>
-            <th class="amount">{$t("amount")}</th><th>{$t("transactionContext")}</th><th>{$t("descriptionOrNotes")}</th>
+            <th class="amount">{$t("amount")}</th><th>{$t("transactionContext")}</th>
           </tr>
         </thead>
         <tbody>
@@ -279,11 +279,10 @@
                 <td data-label={$t("category")}>{row.categoryLabelText || row.categoryKey || "-"}</td>
                 <td class="amount" data-label={$t("amount")}>{formatMoney(row.expenseAmount)}</td>
                 <td data-label={$t("transactionContext")}>{`${row.monthName} / ${row.periodLabel} / ${row.periodDisplay}`}</td>
-                <td data-label={$t("descriptionOrNotes")}>{row.notes || row.description || "-"}</td>
               </tr>
             {/each}
           {:else}
-            <tr><td colspan="6">{$t("noTransactions")}</td></tr>
+            <tr><td colspan="5">{$t("noTransactions")}</td></tr>
           {/if}
         </tbody>
       </table>
