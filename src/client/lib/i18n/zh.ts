@@ -192,7 +192,6 @@ export const zh: Dictionary = {
   transactionDate: "交易日期",
   transactionContext: "月份 / 週期",
   transactionContextLine: (month, period) => `${month} · ${period}`,
-  descriptionOrNotes: "說明 / 備註",
   notesPlaceholder: "例如：緊急維修 $金額\n突發費用 $金額",
   minAmount: "最低金額",
   amount: "金額",
