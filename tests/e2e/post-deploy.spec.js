@@ -2672,11 +2672,14 @@ test("transaction history shows description only, no separate notes column @e2e-
     // Overview panel regression: the note still shows only on the incidentals row
     await page.locator('.history-section-tab[data-history-section="overview"]').click();
     await expect(page.locator("#historyOverviewPanel")).not.toHaveClass(/hidden/);
+    // The note appears on exactly 1 overview row, and that row is Incidentals
     const overviewNoteRow = page.locator("#historyTable tbody tr").filter({ hasText: incidentalNote });
     await expect(overviewNoteRow).toHaveCount(1);
     await expect(overviewNoteRow).toContainText("Incidentals");
-    // Grocery rows must never show the note
-    await expect(page.locator("#historyTable tbody tr").filter({ hasText: "Grocery" })).not.toContainText(incidentalNote);
+    // No non-incidental row contains the note
+    await expect(
+      page.locator("#historyTable tbody tr").filter({ hasText: "Grocery" }).filter({ hasText: incidentalNote }),
+    ).toHaveCount(0);
   } finally {
     await restoreState(page, originalState);
   }
