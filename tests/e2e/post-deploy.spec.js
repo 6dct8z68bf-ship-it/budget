@@ -2643,6 +2643,11 @@ test("transaction history shows description only, no separate notes column @e2e-
     state.currentMonthId = monthId;
     await restoreState(page, state);
 
+    // Reload the app so the client picks up the seeded state
+    await page.goto(appUrl);
+    await waitForAppReady(page);
+    await dismissOnboardingIfVisible(page);
+
     // Open history → transactions panel
     await page.locator('.nav-tab[data-view="history"]').click();
     await expect(page.locator("#historyView")).toHaveClass(/active/);
