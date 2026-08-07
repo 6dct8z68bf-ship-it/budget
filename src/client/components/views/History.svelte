@@ -6,6 +6,7 @@
   import { computedWeeks, orderedMonths, type WeekComputed } from "$lib/overview";
   import { categoryDefinitions, monthDisplayName, normalizeTransactions } from "$lib/normalize";
   import { formatMoney, formatIsoDateDisplay, formatPeriodDisplay, numberOrZero, normalizeMerchant } from "$lib/format";
+  import CategoryChart from "$components/history/CategoryChart.svelte";
 
   const SECTIONS: { key: "overview" | "transactions"; label: string }[] = [
     { key: "overview", label: "historyOverviewTab" },
@@ -21,11 +22,23 @@
   const months = $derived(orderedMonths($appState));
   const historyCategories = $derived(categoryDefinitions($appState.categorySettings, { includeArchived: true }));
 
+  // Chart months: all months cap at the latest 12 periods; a specific selection
+  // shows only that month.
+  const historyChartMonths = $derived(
+    historyMonth === "all" ? months.slice(-12) : months.filter((month) => month.id === historyMonth),
+  );
+
   function historyCategoryLabel(category: (typeof historyCategories)[number]): string {
     const override = $appState.categorySettings?.labelOverrides?.[category.key];
     if (override) return override;
     const label = category.source === "system" ? $categoryLabel(category.key) : category.label;
     return category.archived ? `${label} (${$t("categoryArchivedStatus")})` : label;
+  }
+
+  function historyChartLabel(key: string): string {
+    if (key === "grocery") return $t("grocery");
+    const category = historyCategories.find((item) => item.key === key);
+    return category ? historyCategoryLabel(category) : $categoryLabel(key);
   }
 
   function historyEntries(row: WeekComputed) {
@@ -175,6 +188,12 @@
   </nav>
 
   <section id="historyOverviewPanel" class="panel history-panel" class:hidden={$currentHistorySection !== "overview"}>
+    <CategoryChart
+      months={historyChartMonths}
+      singleMonth={historyMonth !== "all"}
+      categories={historyCategories}
+      getLabel={historyChartLabel}
+    />
     <div class="filters">
       <label class="field">
         <span>{$t("month")}</span>

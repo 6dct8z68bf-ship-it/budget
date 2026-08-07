@@ -3001,6 +3001,157 @@ button.is-loading::after {
   }
 }
 
+.history-category-chart-panel {
+  scroll-margin-top: 96px;
+}
+
+.category-legend-swatch {
+  display: inline-block;
+  width: 12px;
+  height: 12px;
+  border-radius: 3px;
+}
+
+.category-treemap-wrap {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 5 / 3;
+  border-radius: 10px;
+  overflow: hidden;
+  background: var(--surface);
+}
+
+.category-treemap-tile {
+  position: absolute;
+  box-sizing: border-box;
+  border-radius: 8px;
+  outline: 1px solid var(--surface);
+  overflow: hidden;
+  background-color: var(--tile-color);
+  cursor: default;
+}
+
+.category-treemap-tile::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background-color: rgba(2, 6, 23, var(--tile-dim, 0));
+  pointer-events: none;
+}
+
+[data-theme="dark"] .category-treemap-tile::after {
+  background-color: rgba(255, 255, 255, var(--tile-dim-dark, 0));
+}
+
+.category-treemap-tile:hover,
+.category-treemap-tile:focus-visible,
+.category-treemap-tile.category-treemap-tile-active {
+  outline: 2px solid var(--ink);
+  z-index: 2;
+}
+
+.category-treemap-tile-inner {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 2px;
+  height: 100%;
+  box-sizing: border-box;
+  padding: 6px;
+  color: #ffffff;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.35);
+}
+
+.category-treemap-tile-label {
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1.2;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.category-treemap-tile-amount {
+  font-size: 11px;
+  line-height: 1.2;
+  opacity: 0.92;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.category-treemap-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 14px;
+  margin-top: 12px;
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.4;
+}
+
+.category-treemap-legend > span {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.category-chart-detail {
+  display: grid !important;
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  align-items: center;
+  gap: 10px 14px;
+  width: 100%;
+  height: 150px;
+  overflow-y: auto;
+  scrollbar-gutter: stable;
+  margin-top: 14px;
+  box-sizing: border-box;
+  min-width: 0;
+  max-width: none;
+  border: 0;
+  border-top: 1px solid var(--line);
+  border-radius: 0;
+  background: transparent;
+  padding: 14px 4px 0;
+  font-size: 12px;
+  line-height: 1.35;
+}
+
+.category-chart-detail .chart-detail-primary {
+  grid-column: 1 / -1;
+}
+
+.category-chart-detail.hidden {
+  display: grid !important;
+  visibility: visible;
+  opacity: 1;
+  pointer-events: none;
+}
+
+.category-chart-detail.hidden > * {
+  display: none;
+}
+
+.category-chart-detail.hidden::before {
+  content: attr(data-placeholder);
+  grid-column: 1 / -1;
+  align-self: center;
+  color: var(--muted);
+  font-size: 13px;
+}
+
+@media (max-width: 600px) {
+  .category-chart-detail {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+    padding-top: 12px;
+  }
+}
+
 .grocery-explainer {
   margin: 8px 0 0;
   color: #405048;
