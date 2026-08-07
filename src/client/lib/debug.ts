@@ -12,6 +12,7 @@ import type { Month } from "$shared/types";
 
 let barsProvider: () => unknown[] = () => [];
 let pointsProvider: () => unknown[] = () => [];
+let categoryTreemapProvider: () => unknown = () => null;
 let decisionKindProvider: () => StatusKind = () => "empty";
 
 export function registerWeeklyChart(getBars: () => unknown[]): void {
@@ -19,6 +20,9 @@ export function registerWeeklyChart(getBars: () => unknown[]): void {
 }
 export function registerTrendChart(getPoints: () => unknown[]): void {
   pointsProvider = getPoints;
+}
+export function registerCategoryTreemap(getData: () => unknown): void {
+  categoryTreemapProvider = getData;
 }
 // The Overview decision card publishes the current month's status kind (mirrors the
 // vanilla setOverviewStatus writing month._barStatusKind).
@@ -61,6 +65,9 @@ export function installDebugApi(): void {
     get chartBars() {
       return barsProvider();
     },
+    get categoryTreemap() {
+      return categoryTreemapProvider();
+    },
     currentImportPeriodRange,
     CATEGORY_CHART_COLORS,
   };
@@ -72,6 +79,7 @@ export function installDebugApi(): void {
     currentMonthId: { configurable: true, get: () => get(currentMonthId) },
     trendPoints: { configurable: true, get: () => pointsProvider() },
     chartBars: { configurable: true, get: () => barsProvider() },
+    categoryTreemap: { configurable: true, get: () => categoryTreemapProvider() },
     currentMonth: { configurable: true, value: currentMonthWithStatus },
     monthlyTrendRows: { configurable: true, value: () => monthlyTrendRows(get(appState)) },
     monthlyStatusKind: { configurable: true, value: statusKindFor },

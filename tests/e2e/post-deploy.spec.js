@@ -3139,6 +3139,123 @@ test("bar colors scale with spending via /api/state @e2e-charts-ui", async ({ pa
   }
 });
 
+test("history category treemap follows the month filter @e2e-charts-ui", async ({ page }) => {
+  test.skip(!password, "E2E_APP_PASSWORD is required for authenticated deploy checks.");
+
+  await login(page);
+  await resetCurrentWorkspaceState(page);
+
+  const base = await readState(page);
+  const limit = 15000;
+  base.months["2098-02"] = {
+    id: "2098-02",
+    sortKey: "2098-02",
+    name: "2098 February",
+    creditLimit: limit,
+    weeks: [
+      {
+        id: "2098-02-w1",
+        period: "Period 1",
+        availableBalance: limit - 200,
+        unpaidPrevious: null,
+        cumulativeSpend: 200,
+        categoryValues: { medical: 200 },
+        notes: "E2E history chart seed",
+      },
+    ],
+  };
+  base.currentMonthId = "2098-02";
+  const saveResponse = await page.request.post("/api/state", { data: base });
+  expect(saveResponse.ok()).toBe(true);
+  await page.reload();
+  await waitForAppReady(page);
+  await page.locator('.nav-tab[data-view="history"]').click();
+  await expect(page.locator("#historyCategoryTreemap")).toBeVisible();
+
+  // Default "all months": latest months summed into a single treemap by category.
+  let treemap = await page.evaluate(() => window.__budgetDebug.categoryTreemap);
+  expect(treemap.mode).toBe("all");
+  expect(treemap.window.map((entry) => entry.key).sort()).toEqual(["2026-may-jun", "2098-02"]);
+  expect(treemap.total).toBeCloseTo(3452.9, 1);
+  // Every non-zero category gets its own tile - no "others" merging.
+  expect(treemap.items.some((item) => item.key === "grocery")).toBe(true);
+  expect(treemap.items.some((item) => item.key === "others")).toBe(false);
+  expect(treemap.items.every((item) => item.amount > 0 && item.share > 0)).toBe(true);
+
+  // Selecting one month switches the window to that month's completed weeks.
+  await page.locator("#historyMonthFilter").selectOption("2026-may-jun");
+  treemap = await page.evaluate(() => window.__budgetDebug.categoryTreemap);
+  expect(treemap.mode).toBe("month");
+  expect(treemap.window.map((entry) => entry.label)).toEqual(["P1", "P2", "P3"]);
+  expect(treemap.total).toBeCloseTo(3252.9, 1);
+  const keys = treemap.items.map((item) => item.key);
+  expect(keys).toContain("grocery");
+  expect(keys).toContain("medical");
+  expect(keys).toContain("carInsurance");
+  expect(keys).not.toContain("others");
+
+  // Tiles cover the container with positive area proportional to value.
+  const layout = await page.evaluate(() => window.__budgetDebug.categoryTreemap.rects);
+  expect(layout).toHaveLength(treemap.items.length);
+  expect(layout.every((rect) => rect.w > 0 && rect.h > 0)).toBe(true);
+  const areas = layout.map((rect) => rect.w * rect.h);
+  for (let i = 1; i < areas.length; i += 1) {
+    expect(areas[i]).toBeLessThanOrEqual(areas[i - 1] + 1e-9);
+  }
+  expect(areas.reduce((sum, area) => sum + area, 0)).toBeCloseTo(1, 1);
+});
+
+test("history category treemap caps to the latest 12 months @e2e-charts-ui", async ({ page }) => {
+  test.skip(!password, "E2E_APP_PASSWORD is required for authenticated deploy checks.");
+
+  await login(page);
+  await resetCurrentWorkspaceState(page);
+  const base = await readState(page);
+  const limit = 15000;
+  for (let i = 1; i <= 13; i += 1) {
+    const id = `2098-${String(i).padStart(2, "0")}`;
+    base.months[id] = {
+      id,
+      sortKey: id,
+      name: `2098 Month ${i}`,
+      creditLimit: limit,
+      weeks: [
+        {
+          id: `${id}-w1`,
+          period: "Period 1",
+          availableBalance: limit - (100 + i),
+          unpaidPrevious: null,
+          cumulativeSpend: 100 + i,
+          categoryValues: { medical: 50 + i, shoppingDining: 20 },
+          notes: "E2E 12-month cap seed",
+        },
+      ],
+    };
+  }
+  base.currentMonthId = "2098-13";
+  const saveResponse = await page.request.post("/api/state", { data: base });
+  expect(saveResponse.ok()).toBe(true);
+  await page.reload();
+  await waitForAppReady(page);
+  await page.locator('.nav-tab[data-view="history"]').click();
+  await expect(page.locator("#historyCategoryTreemap")).toBeVisible();
+
+  const treemap = await page.evaluate(() => window.__budgetDebug.categoryTreemap);
+  const monthKeys = treemap.window.map((entry) => entry.key);
+  expect(monthKeys).toHaveLength(12);
+  expect(monthKeys[0]).toBe("2098-02");
+  expect(monthKeys[11]).toBe("2098-13");
+  expect(monthKeys).not.toContain("2098-01");
+
+  // The aggregated category breakdown also stops at the latest 12 months.
+  const medical = treemap.items.find((item) => item.key === "medical");
+  expect(medical).toBeTruthy();
+  expect(medical.breakdown).toHaveLength(12);
+  expect(medical.breakdown[0].key).toBe("2098-02");
+  expect(medical.breakdown[11].key).toBe("2098-13");
+  expect(medical.breakdown.some((entry) => entry.key === "2098-01")).toBe(false);
+});
+
 test("signed-in user can edit display name in Settings @e2e-workspace-account", async ({ page }) => {
   test.skip(!password, "E2E_APP_PASSWORD is required for authenticated deploy checks.");
 
