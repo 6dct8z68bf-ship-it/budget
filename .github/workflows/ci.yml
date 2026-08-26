@@ -1,0 +1,25 @@
+name: CI - Typecheck & Unit Tests
+
+on:
+  pull_request:
+    # opened = 建立 PR；synchronize = 推新 commit 更新 PR；reopened = 重開
+    types: [opened, synchronize, reopened]
+
+jobs:
+  unit-tests:
+    name: Typecheck & unit tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    concurrency:
+      group: ci-${{ github.ref }}
+      cancel-in-progress: true
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: package-lock.json
+      - run: npm ci
+      - run: npm run typecheck
+      - run: npm run test:unit

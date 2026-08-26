@@ -25,6 +25,7 @@
     "src/client/**/*.ts",
     "src/client/**/*.svelte",
     "src/shared/**/*.ts",
+    "tests/unit/**/*.ts",
     "vite.config.mts"
   ],
   "exclude": ["node_modules", "dist", "src/server", "src/public"]
