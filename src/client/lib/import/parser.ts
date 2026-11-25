@@ -155,6 +155,10 @@ function parseTransactionRows(source: string): ParsedRow[] {
   const headerColumns = lines.length ? detectHeaderColumns(lines[0]) : null;
   if (headerColumns) return lines.slice(1).map((line) => parseMappedRow(line, headerColumns));
 
+  // The bank's copyable statement view groups transactions under day headings.
+  const webRows = parseWebStatementText(lines);
+  if (webRows) return webRows;
+
   const looseRows = parseLooseTransactionText(transactionSource);
   if (looseRows.length) return looseRows;
 
@@ -237,6 +241,68 @@ function parseLooseTransactionText(source: string): ParsedRow[] {
   return rows.filter((row) => row.dateIso || row.description || !Number.isNaN(row.amount));
 }
 
+// === statement web copy ===
+// The bank's statement page can only be copied as text in this shape:
+//   Wed 25 Nov 2026	Amount
+//
+//   PENDING: BP AA (Doncaster)
+//   -90.81 dollars-$90.81
+// A day heading opens a group and a "dollars" line closes one transaction, so
+// several transactions under the same day stay separate.
+const WEB_AMOUNT_LINE = /^[+-]?\$?\d[\d,]*(?:\.\d{2})?\s*dollars?\b/i;
+
+function parseWebStatementText(lines: string[]): ParsedRow[] | null {
+  if (!lines.some((line) => WEB_AMOUNT_LINE.test(line.trim()))) return null;
+  if (!lines.some((line) => webDayDate(line))) return null;
+
+  const rows: ParsedRow[] = [];
+  let rawDate = "";
+  let dateIso = "";
+  let descriptionParts: string[] = [];
+
+  lines.forEach((line) => {
+    const dayIso = webDayDate(line);
+    if (dayIso) {
+      rawDate = line.split("\t")[0].trim();
+      dateIso = dayIso;
+      descriptionParts = [];
+      return;
+    }
+    if (!dateIso) return;
+
+    const amountLine = line.trim();
+    if (/^(amount|description|balance)$/i.test(amountLine)) return;
+    if (WEB_AMOUNT_LINE.test(amountLine)) {
+      if (!descriptionParts.length) return;
+      const amount = parseWebAmount(amountLine);
+      rows.push({
+        sourceLine: [...descriptionParts, amountLine].join(" "),
+        rawDate,
+        dateIso,
+        amount,
+        description: cleanLooseDescription(descriptionParts.join(" ")) || amountLine,
+        error: Number.isNaN(amount) ? "unsupported row format" : "",
+      });
+      descriptionParts = [];
+      return;
+    }
+    descriptionParts.push(amountLine);
+  });
+
+  return rows;
+}
+
+// Day headings may keep the "Amount" column title after a tab or a space.
+function webDayDate(line: string): string {
+  const firstCell = line.split("\t")[0].trim().replace(/\s+amount$/i, "");
+  return parseImportDate(firstCell);
+}
+
+function parseWebAmount(line: string): number {
+  const match = String(line).match(/^[+-]?\$?[\d,]+(?:\.\d{2})?/);
+  return match ? parseImportAmount(match[0]) : NaN;
+}
+
 function parseCsvLine(line: string): string[] {
   const columns: string[] = [];
   let current = "";
@@ -267,6 +333,9 @@ function parseImportDate(value: string): string {
   if (dmy) return toIsoDate(Number(dmy[3]), Number(dmy[2]), Number(dmy[1]));
   const iso = trimmed.match(/^(\d{4})-(\d{2})-(\d{2})$/);
   if (iso) return toIsoDate(Number(iso[1]), Number(iso[2]), Number(iso[3]));
+  // The bank's copyable statement view prefixes the day name ("Wed 25 Nov 2026").
+  const weekday = trimmed.match(/^(?:mon|tue|wed|thu|fri|sat|sun)[a-z]*\s+(\d{1,2})\s+([a-z]{3,9})\s+(\d{4})\b/i);
+  if (weekday) return toIsoDate(Number(weekday[3]), monthNameToNumber(weekday[2]), Number(weekday[1]));
   const named = trimmed.match(/^(\d{1,2})\s+([a-z]{3,9})\s+(\d{4})$/i);
   if (named) return toIsoDate(Number(named[3]), monthNameToNumber(named[2]), Number(named[1]));
   return "";
@@ -293,7 +362,9 @@ function monthNameToNumber(value: string): number {
 }
 
 function parseImportAmount(value: string): number {
-  const cleaned = String(value || "").replace(/[$,\s"]/g, "");
+  const cleaned = String(value || "")
+    .replace(/[\u2212\u2013\u2014]/g, "-")
+    .replace(/[$,\s"]/g, "");
   if (!cleaned) return NaN;
   const bracketed = cleaned.match(/^\((.+)\)$/);
   return Number(bracketed ? `-${bracketed[1]}` : cleaned);
@@ -307,7 +378,7 @@ function parseLooseAmount(value: string): number {
 function cleanLooseDescription(value: string): string {
   return String(value || "")
     .replace(/Open transaction details/gi, "")
-    .replace(/\bPENDING\s*-\s*/gi, "")
+    .replace(/\bPENDING\s*[:-]\s*/gi, "")
     .replace(/\s+/g, " ")
     .trim();
 }

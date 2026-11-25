@@ -92,6 +92,80 @@ describe("headerless pastes", () => {
   });
 });
 
+describe("copyable statement view", () => {
+  const paste = [
+    "Available",
+    "$9,026.87",
+    "",
+    "Total owing from last statement",
+    "$4,604.78",
+    "",
+    "Wed 25 Nov 2026\tAmount",
+    "",
+    "PENDING: BP AA (Doncaster)",
+    "-90.81 dollars-$90.81",
+    "",
+    "PENDING: Woolworths (Blackburn North)",
+    "-16.70 dollars-$16.70",
+    "Tue 24 Nov 2026\tAmount",
+    "",
+    "PENDING: BIG W (Westfield Doncaster)",
+    "-8.25 dollars-$8.25",
+    "Mon 23 Nov 2026\tAmount",
+    "",
+    "VicRoads",
+    "-482.15 dollars-$482.15",
+    "The Don Deli (Tunstall Square)",
+    "-134.95 dollars-$134.95",
+    "",
+    "PENDING: Public Transport Victoria",
+    "-1.00 dollars-$1.00",
+    "Sun 22 Nov 2026\tAmount",
+    "",
+    "Woolworths (Forest Hill Chase)",
+    "-9.00 dollars-$9.00",
+    "McDonald's (Footscray)",
+    "-19.00 dollars-$19.00",
+  ].join("\n");
+
+  it("keeps every transaction separate within a day", () => {
+    const rows = buildImportRows(paste, ctx);
+
+    expect(rows).toHaveLength(8);
+    expect(rows.map((row) => row.description)).toEqual([
+      "BP AA (Doncaster)",
+      "Woolworths (Blackburn North)",
+      "BIG W (Westfield Doncaster)",
+      "VicRoads",
+      "The Don Deli (Tunstall Square)",
+      "Public Transport Victoria",
+      "Woolworths (Forest Hill Chase)",
+      "McDonald's (Footscray)",
+    ]);
+    expect(rows.map((row) => row.amount)).toEqual([-90.81, -16.7, -8.25, -482.15, -134.95, -1, -9, -19]);
+    expect(rows.map((row) => row.dateIso)).toEqual([
+      "2026-11-25",
+      "2026-11-25",
+      "2026-11-24",
+      "2026-11-23",
+      "2026-11-23",
+      "2026-11-23",
+      "2026-11-22",
+      "2026-11-22",
+    ]);
+  });
+
+  it("creates one row per transaction, none excluded", () => {
+    const rows = buildImportRows(paste, ctx);
+
+    expect(rows.filter((row) => row.status === "excluded")).toEqual([]);
+  });
+
+  it("still reads the balance block above the copied statement", () => {
+    expect(parseBalanceHints(paste)).toEqual({ available: 9026.87, unpaid: 4604.78 });
+  });
+});
+
 describe("statement balance block", () => {
   const source = [
     "Available",
