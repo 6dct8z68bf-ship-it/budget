@@ -244,7 +244,7 @@
     <textarea
       id="transactionImportInput"
       rows="5"
-      placeholder={'20/06/2026,"-36.35","COLES 7735 DONCASTER VIC",""'}
+      placeholder={'Transaction Date,Description,Amount,Balance\n23/11/2026,Woolworths,-28.18,0'}
       bind:value={importText}
     ></textarea>
   </label>
