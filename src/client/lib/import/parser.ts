@@ -25,10 +25,23 @@ interface ParsedRow {
 interface BaseRow extends ImportRow {}
 
 // === balance hints ===
+// A balance hint is a label/value pair ("Available", "Total owing"). Rows that
+// start with a date are always transactions, so a description such as
+// "UNPAID ITEM FEE" is not mistaken for the unpaid-balance hint.
+function looksLikeTransactionRow(line: string): boolean {
+  const trimmed = line.trim().replace(/^"/, "");
+  return (
+    /^\d{1,2}[/.-]\d{1,2}[/.-]\d{2,4}\b/.test(trimmed) ||
+    /^\d{4}-\d{2}-\d{2}\b/.test(trimmed) ||
+    /^\d{1,2}\s+[a-z]{3,9}\s+\d{4}\b/i.test(trimmed)
+  );
+}
+
 export function parseBalanceHints(source: string): BalanceHints {
   const lines = source.split(/\r?\n/).map((line) => line.trim());
   return lines.reduce<BalanceHints>(
     (hints, line, index) => {
+      if (looksLikeTransactionRow(line)) return hints;
       const label = line.toLowerCase();
       if (label.includes("available")) {
         const amount = parseLooseAmount(line);
@@ -54,6 +67,7 @@ export function stripBalanceHintLines(source: string): string {
   const lines = source.split(/\r?\n/);
   const skip = new Set<number>();
   lines.forEach((line, index) => {
+    if (looksLikeTransactionRow(line)) return;
     const label = line.trim().toLowerCase();
     if (!label.includes("available") && !label.includes("total owing") && !label.includes("unpaid")) return;
     skip.add(index);
@@ -66,31 +80,105 @@ export function stripBalanceHintLines(source: string): string {
 }
 
 // === row parsing ===
+// Column roles are detected from the header so layout changes (for example the
+// bank's "Transaction Date","Description","Amount","Balance" export) do not
+// silently shift values into the wrong field. Balance is informational only.
+type ColumnRole = "date" | "description" | "amount" | "debit" | "credit" | "balance";
+type ColumnMap = Partial<Record<ColumnRole, number>>;
+
+const HEADER_ROLE_PATTERNS: Array<{ role: ColumnRole; pattern: RegExp }> = [
+  { role: "balance", pattern: /\bbalance\b/ },
+  { role: "debit", pattern: /\b(debit|withdrawal|withdrawals|money out|paid out)\b/ },
+  { role: "credit", pattern: /\b(credit|deposit|deposits|money in|paid in)\b/ },
+  { role: "date", pattern: /\b(date|posted|posting)\b/ },
+  { role: "description", pattern: /\b(description|details|narrative|merchant|particulars|reference)\b/ },
+  { role: "amount", pattern: /\bamount\b/ },
+];
+
+function detectHeaderColumns(line: string): ColumnMap | null {
+  const labels = parseCsvLine(line);
+  if (labels.length < 2) return null;
+  const columns: ColumnMap = {};
+  labels.forEach((label, index) => {
+    const key = label.toLowerCase().replace(/[^a-z]+/g, " ").trim();
+    if (!key) return;
+    const match = HEADER_ROLE_PATTERNS.find(({ role, pattern }) => columns[role] === undefined && pattern.test(key));
+    if (match) columns[match.role] = index;
+  });
+  const hasDate = columns.date !== undefined;
+  const hasAmount = columns.amount !== undefined || columns.debit !== undefined || columns.credit !== undefined;
+  return hasDate && hasAmount ? columns : null;
+}
+
+function columnValue(values: string[], index: number | undefined): string {
+  return index === undefined ? "" : String(values[index] || "").trim();
+}
+
+function parseMappedAmount(values: string[], columns: ColumnMap): number {
+  if (columns.amount !== undefined) return parseImportAmount(columnValue(values, columns.amount));
+  // Separate debit/credit columns: debits are spending, credits are payments/refunds.
+  const debit = parseImportAmount(columnValue(values, columns.debit));
+  if (!Number.isNaN(debit) && debit !== 0) return -Math.abs(debit);
+  const credit = parseImportAmount(columnValue(values, columns.credit));
+  if (!Number.isNaN(credit) && credit !== 0) return Math.abs(credit);
+  return NaN;
+}
+
+function fallbackDescription(values: string[], skip: Array<number | undefined>): string {
+  return values.find((value, index) => !skip.includes(index) && value && Number.isNaN(parseImportAmount(value))) || "";
+}
+
+function parseMappedRow(line: string, columns: ColumnMap): ParsedRow {
+  const values = parseCsvLine(line);
+  const rawDate = columnValue(values, columns.date);
+  const dateIso = parseImportDate(rawDate);
+  const amount = parseMappedAmount(values, columns);
+  const description =
+    columnValue(values, columns.description) ||
+    fallbackDescription(values, [columns.date, columns.amount, columns.debit, columns.credit, columns.balance]) ||
+    line;
+  return {
+    sourceLine: line,
+    rawDate,
+    dateIso,
+    amount,
+    description,
+    error: Number.isNaN(amount) ? "unsupported row format" : "",
+  };
+}
+
 function parseTransactionRows(source: string): ParsedRow[] {
   const transactionSource = stripBalanceHintLines(source);
+  const lines = transactionSource.split(/\r?\n/).map((line) => line.trim()).filter(Boolean);
+
+  // Header row wins over loose-text heuristics: a CSV export always has one.
+  const headerColumns = lines.length ? detectHeaderColumns(lines[0]) : null;
+  if (headerColumns) return lines.slice(1).map((line) => parseMappedRow(line, headerColumns));
+
   const looseRows = parseLooseTransactionText(transactionSource);
   if (looseRows.length) return looseRows;
 
-  return transactionSource
-    .split(/\r?\n/)
-    .map((line) => line.trim())
-    .filter(Boolean)
-    .map((line) => {
-      const columns = parseCsvLine(line);
-      if (columns.length < 3) {
-        return { sourceLine: line, error: "unsupported row format", rawDate: columns[0] || "", amount: 0, description: line, dateIso: "" };
-      }
-      const dateIso = parseImportDate(columns[0]);
-      const amount = parseImportAmount(columns[1]);
-      return {
-        sourceLine: line,
-        rawDate: columns[0],
-        dateIso,
-        amount,
-        description: columns[2] || columns[3] || line,
-        error: Number.isNaN(amount) ? "unsupported row format" : "",
-      };
-    });
+  return lines.map((line) => {
+    const columns = parseCsvLine(line);
+    if (columns.length < 3) {
+      return { sourceLine: line, error: "unsupported row format", rawDate: columns[0] || "", amount: 0, description: line, dateIso: "" };
+    }
+    const dateIso = parseImportDate(columns[0]);
+    // Legacy layout is date,amount,description. Rows pasted without a header may
+    // already use date,description,amount,balance; detect that per row so an
+    // unchanged paste still works after the bank's format switch.
+    const legacyAmount = parseImportAmount(columns[1]);
+    const shifted = Number.isNaN(legacyAmount) && !Number.isNaN(parseImportAmount(columns[2]));
+    const amount = shifted ? parseImportAmount(columns[2]) : legacyAmount;
+    return {
+      sourceLine: line,
+      rawDate: columns[0],
+      dateIso,
+      amount,
+      description: (shifted ? columns[1] : columns[2] || columns[3]) || line,
+      error: Number.isNaN(amount) ? "unsupported row format" : "",
+    };
+  });
 }
 
 function parseLooseTransactionText(source: string): ParsedRow[] {
